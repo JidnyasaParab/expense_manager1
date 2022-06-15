@@ -1,0 +1,8 @@
+mutation createItem($input:ItemInput!){
+    createItem(initData: $input){
+        id
+        isExpense
+        label
+        cost
+    }
+}

@@ -1,3 +1,5 @@
+import 'package:gql_http_link/gql_http_link.dart';
+import 'package:ferry/ferry.dart';
 import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_manager/widgets/home.dart';
@@ -27,20 +29,30 @@ void main() {
   return runApp(ModularApp(module: AppModule(), child: MyApp()));
 }
 
+Future<Client> initClient() async {
+  final link = HttpLink("http://192.168.0.114:3000/graphql");
+
+  final client = Client(
+    link: link,
+  );
+
+  return client;
+}
+
 class AppModule extends Module {
-  @override
-  List<Bind> get binds => [
-        Bind.singleton((i) => ChopperClient(
-              baseUrl: "https://081f-203-194-100-218.in.ngrok.io",
-              services: [
-                // Create and pass an instance of the generated service to the client
-                ExpenseService.create()
-              ],
-              converter: EntryConverter(),
-              errorConverter: JsonConverter(),
-            )),
-        Bind.singleton((i) => ItemList()),
-      ];
+  // @override
+  // List<Bind> get binds => [
+  //       Bind.singleton((i) => ChopperClient(
+  //             baseUrl: "https://081f-203-194-100-218.in.ngrok.io",
+  //             services: [
+  //               // Create and pass an instance of the generated service to the client
+  //               ExpenseService.create()
+  //             ],
+  //             converter: EntryConverter(),
+  //             errorConverter: JsonConverter(),
+  //           )),
+  //       Bind.singleton((i) => ItemList()),
+  //     ];
 
   @override
   List<ModularRoute> get routes => [
@@ -63,7 +75,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'ExpenseManager',
-      theme: ThemeData(primarySwatch: Colors.black),
+      theme: ThemeData(primarySwatch: Colors.blue),
       routeInformationParser: Modular.routeInformationParser,
       routerDelegate: Modular.routerDelegate,
     ); //added by extension

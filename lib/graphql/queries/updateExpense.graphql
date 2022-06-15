@@ -1,0 +1,8 @@
+mutation updateItem($input: ItemInput!, $id: ID!){
+    updateItem(newData: $input,id: $id){
+        id
+        isExpense
+        label
+        cost
+    }
+}

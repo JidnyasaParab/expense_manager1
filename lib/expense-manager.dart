@@ -34,8 +34,6 @@ class _ExpenseManagerState extends State<ExpenseManager> {
     client
         .query(QueryOptions(document: GetItemsQuery().document))
         .then((value) {
-      final log = Logger();
-      log.d(value.data);
       final res =
           GetItems$Query.fromJson(Map<String, dynamic>.from(value.data!));
       res.items.forEach((element) {

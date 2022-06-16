@@ -1,0 +1,8 @@
+{
+  "name": "expense_manager1",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/JidnyasaParab/expense_manager1.git",
+  "author": "sdbarve14 <sdbarve14@gmail.com>",
+  "license": "MIT"
+}

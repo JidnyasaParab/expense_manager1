@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:graphql/client.dart';
 import '../model/item.dart';
 import '../store/item_list.dart';
 import 'package:expense_manager/graphql/graphql.dart';
@@ -94,7 +95,41 @@ class _ExpenseCardState extends State<ExpenseCard> {
                 ),
                 IconButton(
                   onPressed: () {
-                    item_list.record.remove(widget.item);
+                    final client = Modular.get<GraphQLClient>();
+                    client
+                        .mutate(
+                      MutationOptions(
+                        document: DeleteItemMutation(
+                          variables: DeleteItemArguments(
+                            input: widget.item.id.toString(),
+                          ),
+                        ).document,
+                        variables: {
+                          "input": widget.item.id,
+                        },
+                      ),
+                    )
+                        .then((value) {
+                      if (DeleteItem$Mutation.fromJson(value.data!)
+                          .deleteItem!) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Expense deleted successfully!!"),
+                          ),
+                        );
+                        item_list.record.remove(widget.item);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Expense could not be deleted!!"),
+                          ),
+                        );
+                      }
+                    }).onError((error, stackTrace) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(error.toString()),
+                      ));
+                    });
                   },
                   icon: Icon(Icons.delete),
                 ),

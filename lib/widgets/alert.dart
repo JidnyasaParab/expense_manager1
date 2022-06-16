@@ -8,6 +8,7 @@ import 'package:expense_manager/store/item_list.dart';
 import 'package:expense_manager/graphql/graphql.dart';
 
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:graphql/client.dart';
 import 'package:logger/logger.dart';
 
 Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
@@ -27,7 +28,49 @@ Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
       final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
       void _sendData() {
+        final client = Modular.get<GraphQLClient>();
+
+        client
+            .mutate(
+          MutationOptions(
+              document: CreateItemMutation(
+                variables: CreateItemArguments(
+                  input: ItemInput(
+                    isExpense: _isExpense ?? false,
+                    label: _descriptionController.text,
+                    cost: int.parse(
+                      _amountController.text.toString(),
+                    ),
+                  ),
+                ),
+              ).document,
+              variables: {
+                "isExpense": _isExpense ?? false,
+                "label": _descriptionController.text,
+                "cost": int.parse(
+                  _amountController.text.toString(),
+                ),
+              }),
+        )
+            .then((value) {
+          if (value.data != null) {
+            final res = GetItems$Query$Item.fromJson(value.data!['createItem']);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Expense added successfully!!"),
+              ),
+            );
+            item_list.addItem(res);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Some problems occurred!!"),
+              ),
+            );
+          }
+        });
         Navigator.of(context).pop();
+
         // final chopper = Modular.get<ChopperClient>();
         // ExpenseService service = chopper.getService<ExpenseService>();
         // Item data = Item(

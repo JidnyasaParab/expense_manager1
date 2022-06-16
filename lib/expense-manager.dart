@@ -32,11 +32,16 @@ class _ExpenseManagerState extends State<ExpenseManager> {
     final getExpense = GetItemsQuery();
 
     client
-        .query<GetItemsQuery>(
-            QueryOptions<GetItemsQuery>(document: GetItemsQuery().document))
+        .query(QueryOptions(document: GetItemsQuery().document))
         .then((value) {
       final log = Logger();
-      log.d(value.data!['items']);
+      log.d(value.data);
+      final res =
+          GetItems$Query.fromJson(Map<String, dynamic>.from(value.data!));
+      res.items.forEach((element) {
+        item_list.addItem(element!);
+      });
+      // log.d();
     });
     // artemis.execute(getExpense).then((value) {
     //   final log = Logger();

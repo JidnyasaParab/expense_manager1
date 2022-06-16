@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:expense_manager/expense-manager.dart';
 
-import '../model/alert.dart';
+import 'alert.dart';
 
 class Home extends StatefulWidget {
   const Home({Key? key}) : super(key: key);

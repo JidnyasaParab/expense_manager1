@@ -3,13 +3,14 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import '../model/item.dart';
 import '../store/item_list.dart';
-import '../model/alert.dart';
+import 'package:expense_manager/graphql/graphql.dart';
+import 'alert.dart';
 
 class ExpenseCard extends StatefulWidget {
   // final bool isExpense;
   // final String label;
   // final int cost;
-  final Item item;
+  final GetItems$Query$Item item;
 
   const ExpenseCard({Key? key, required this.item}) : super(key: key);
   // const ExpenseCard(
@@ -31,7 +32,7 @@ class _ExpenseCardState extends State<ExpenseCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (widget.item.isExpense) {
+    if (widget.item.isExpense!) {
       type = "Expense";
       typeColor = Colors.red;
     } else {

@@ -1,8 +1,8 @@
-query{
-    items{
-        id
-        isExpense
-        label
-        cost
-    }
+query getItems {
+  items {
+    id
+    isExpense
+    label
+    cost
+  }
 }

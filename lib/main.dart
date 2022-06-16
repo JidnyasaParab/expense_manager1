@@ -1,27 +1,24 @@
-import 'package:gql_http_link/gql_http_link.dart';
-import 'package:ferry/ferry.dart';
 import 'package:dart_json_mapper/dart_json_mapper.dart';
+import 'package:expense_manager/graphql/graphql.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_manager/widgets/home.dart';
 import 'package:mobx/mobx.dart';
-// import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:expense_manager/store/item_list.dart';
-import 'package:expense_manager/model/ExpenseService.dart';
-import 'package:chopper/chopper.dart';
-import 'package:expense_manager/model/Converter.dart';
 import 'package:dart_json_mapper_mobx/dart_json_mapper_mobx.dart'
     show mobXAdapter;
-
-import 'model/item.dart';
+// import 'package:artemis/artemis.dart';
+import 'package:graphql/client.dart';
+// part 'main.mapper.g.dart';
 
 void main() {
   initializeJsonMapper(adapters: [
     mobXAdapter,
     JsonMapperAdapter(
       valueDecorators: {
-        typeOf<ObservableList<Item>>(): (value) => value.cast<Item>()
+        typeOf<ObservableList<GetItems$Query$Item>>(): (value) =>
+            value.cast<GetItems$Query$Item>()
       },
     )
   ]);
@@ -29,30 +26,35 @@ void main() {
   return runApp(ModularApp(module: AppModule(), child: MyApp()));
 }
 
-Future<Client> initClient() async {
-  final link = HttpLink("http://192.168.0.114:3000/graphql");
+// Future<Client> initClient() async {
+//   final link = HttpLink("http://192.168.0.114:3000/graphql");
 
-  final client = Client(
-    link: link,
-  );
+//   final client = Client(
+//     link: link,
+//   );
 
-  return client;
-}
+//   return client;
+// }
 
 class AppModule extends Module {
-  // @override
-  // List<Bind> get binds => [
-  //       Bind.singleton((i) => ChopperClient(
-  //             baseUrl: "https://081f-203-194-100-218.in.ngrok.io",
-  //             services: [
-  //               // Create and pass an instance of the generated service to the client
-  //               ExpenseService.create()
-  //             ],
-  //             converter: EntryConverter(),
-  //             errorConverter: JsonConverter(),
-  //           )),
-  //       Bind.singleton((i) => ItemList()),
-  //     ];
+  @override
+  List<Bind> get binds => [
+        // Bind.singleton((i) => ChopperClient(
+        //       baseUrl: "https://081f-203-194-100-218.in.ngrok.io",
+        //       services: [
+        //         // Create and pass an instance of the generated service to the client
+        //         ExpenseService.create()
+        //       ],
+        //       converter: EntryConverter(),
+        //       errorConverter: JsonConverter(),
+        //     )),
+        Bind.singleton((i) => ItemList()),
+        // Bind.singleton((i) => ArtemisClient("http://192.168.0.114:3000/graphql"))
+        Bind.singleton((i) => GraphQLClient(
+              link: HttpLink("http://192.168.0.114:3000/graphql"),
+              cache: GraphQLCache(),
+            )),
+      ];
 
   @override
   List<ModularRoute> get routes => [
@@ -78,6 +80,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.blue),
       routeInformationParser: Modular.routeInformationParser,
       routerDelegate: Modular.routerDelegate,
+      debugShowCheckedModeBanner: false,
     ); //added by extension
   }
 }

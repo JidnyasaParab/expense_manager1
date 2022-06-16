@@ -1,15 +1,20 @@
+import 'package:artemis/artemis.dart';
 import 'package:flutter/material.dart';
 import "dart:async";
-import 'package:chopper/chopper.dart' hide Get;
+// import 'package:chopper/chopper.dart' hide Get;
 import 'package:expense_manager/widgets/ExpenseCard.dart';
 import 'package:flutter_modular/flutter_modular.dart';
+import 'package:gql/ast.dart';
+import 'package:graphql/client.dart';
 import 'model/item.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:expense_manager/store/item_list.dart';
 import 'package:get/get.dart' hide Response;
 import 'package:logger/logger.dart';
+import 'package:expense_manager/graphql/graphql.dart';
+// import 'package:expense_manager/graphql/queries/getExpenses.graphql';
 
-import 'package:expense_manager/model/ExpenseService.dart';
+// import 'package:expense_manager/model/ExpenseService.dart';
 
 class ExpenseManager extends StatefulWidget {
   @override
@@ -17,26 +22,40 @@ class ExpenseManager extends StatefulWidget {
 }
 
 class _ExpenseManagerState extends State<ExpenseManager> {
-  late Future<Response<List<Item>>> data;
+  // late Future<Response<List<Item>>> data;
   late ItemList item_list;
 
   @override
   void initState() {
-    // final chopper = Get.find<ChopperClient>();
-    // item_list = Get.find<ItemList>();
-
-    final chopper = Modular.get<ChopperClient>();
+    final client = Modular.get<GraphQLClient>();
     item_list = Modular.get<ItemList>();
+    final getExpense = GetItemsQuery();
 
-    ExpenseService service = chopper.getService<ExpenseService>();
-
-    service.getExpenses().then((value) {
+    client
+        .query<GetItemsQuery>(
+            QueryOptions<GetItemsQuery>(document: GetItemsQuery().document))
+        .then((value) {
       final log = Logger();
-      log.d(value.body.runtimeType);
-      value.body!.forEach((e) {
-        item_list.addItem(e);
-      });
+      log.d(value.data!['items']);
     });
+    // artemis.execute(getExpense).then((value) {
+    //   final log = Logger();
+    //   log.d(value.data!.items);
+    //   value.data!.items.forEach((element) {
+    //     if (element != null) {
+    //       item_list.addItem(element);
+    //     }
+    //   });
+    // });
+    // ExpenseService service = chopper.getService<ExpenseService>();
+
+    // service.getExpenses().then((value) {
+    //   final log = Logger();
+    //   log.d(value.body.runtimeType);
+    //   value.body!.forEach((e) {
+    //     item_list.addItem(e);
+    //   });
+    // });
 
     super.initState();
     //item_list.record.
@@ -56,9 +75,6 @@ class _ExpenseManagerState extends State<ExpenseManager> {
               children: item_list.record
                   .map(
                     (e) => ExpenseCard(
-                      // isExpense: e.isExpense,
-                      // label: e.label,
-                      // cost: e.cost,
                       item: e,
                     ),
                   )

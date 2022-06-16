@@ -1,11 +1,15 @@
 targets:
   $default:
-    sources:
-      - lib/graphql/**
-      - lib/graphql/queries/**
+    # sources:
+    #   - $package$
+    #   - lib/**
+    #   - lib/graphql/**
+    #   - lib/graphql/queries/**
 
     builders:
       dart_json_mapper:
+        # options:
+        #   iterables: List
         generate_for:
           # here should be listed entry point files having 'void main()' function
           - lib/main.dart
@@ -25,9 +29,3 @@ targets:
             - schema: lib/graphql/schema.graphql
               queries_glob: lib/graphql/queries/**.graphql
               output: lib/graphql/graphql.dart
-#
-
-
-
-
-

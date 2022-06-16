@@ -1,16 +1,17 @@
 // import 'package:get/get.dart' hide Response;
 // import '../model/Converter.dart';
 import 'package:expense_manager/model/item.dart';
-import 'package:expense_manager/model/ExpenseService.dart';
+// import 'package:expense_manager/model/ExpenseService.dart';
 import 'package:flutter/material.dart';
-import 'package:chopper/chopper.dart' hide Get;
+// import 'package:chopper/chopper.dart' hide Get;
 import 'package:expense_manager/store/item_list.dart';
+import 'package:expense_manager/graphql/graphql.dart';
 
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:logger/logger.dart';
 
 Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
-    {Item? item}) {
+    {GetItems$Query$Item? item}) {
   final item_list = Modular.get<ItemList>();
 
   return showDialog<AlertDialog>(
@@ -27,24 +28,24 @@ Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
 
       void _sendData() {
         Navigator.of(context).pop();
-        final chopper = Modular.get<ChopperClient>();
-        ExpenseService service = chopper.getService<ExpenseService>();
-        Item data = Item(
-            isExpense: _isExpense ?? false,
-            label: _descriptionController.text,
-            cost: int.parse(_amountController.text));
-        // Item data = Item()
-        Future<Response<Map>> res = service.addExpense(data);
+        // final chopper = Modular.get<ChopperClient>();
+        // ExpenseService service = chopper.getService<ExpenseService>();
+        // Item data = Item(
+        //     isExpense: _isExpense ?? false,
+        //     label: _descriptionController.text,
+        //     cost: int.parse(_amountController.text));
+        // // Item data = Item()
+        // Future<Response<Map>> res = service.addExpense(data);
 
         // _addTodoItem(_textFieldController.text);
-        res.then((value) {
-          item_list.addItem(data);
-          // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value.toString())));
-          print(value.toString());
-        }).onError((error, stackTrace) {
-          // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
-          print(stackTrace);
-        });
+        // res.then((value) {
+        //   item_list.addItem(data);
+        //   // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(value.toString())));
+        //   print(value.toString());
+        // }).onError((error, stackTrace) {
+        //   // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error.toString())));
+        //   print(stackTrace);
+        // });
       }
 
       void _editData() {
@@ -80,7 +81,7 @@ Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
                       onSaved: (value) {
                         final log = Logger();
                         log.d(value);
-                        item_list.updateLabel(item, value.toString());
+                        // item_list.updateLabel(item, value.toString());
                       },
                     ),
                     TextFormField(
@@ -91,7 +92,7 @@ Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
                       onSaved: (value) {
                         final log = Logger();
                         log.d(value);
-                        item_list.updateCost(item, int.parse(value.toString()));
+                        // item_list.updateCost(item, int.parse(value.toString()));
                       },
                     )
                   ],

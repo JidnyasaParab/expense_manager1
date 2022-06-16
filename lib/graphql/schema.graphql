@@ -1,0 +1,33 @@
+"""
+Exposes a URL that specifies the behavior of this scalar.
+"""
+directive @specifiedBy(
+  """
+  The URL that specifies the behavior of this scalar.
+  """
+  url: String!
+) on SCALAR
+
+type Item {
+  id: ID!
+  isExpense: Boolean
+  label: String
+  cost: Int
+}
+
+input ItemInput {
+  isExpense: Boolean
+  label: String
+  cost: Int
+}
+
+type Mutation {
+  createItem(initData: ItemInput): Item
+  updateItem(newData: ItemInput, id: ID!): Item
+  deleteItem(id: ID!): Boolean
+}
+
+type Query {
+  items: [Item]!
+  item(id: ID!): Item!
+}

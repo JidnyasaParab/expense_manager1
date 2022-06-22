@@ -2,6 +2,7 @@ import 'package:dart_json_mapper/dart_json_mapper.dart';
 import 'package:expense_manager/graphql/graphql.dart';
 import 'package:flutter/material.dart';
 import 'package:expense_manager/widgets/home.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:mobx/mobx.dart';
 import 'main.mapper.g.dart' show initializeJsonMapper;
 import 'package:flutter_modular/flutter_modular.dart';
@@ -23,7 +24,16 @@ void main() {
     )
   ]);
   // return runApp( MyApp());
-  return runApp(ModularApp(module: AppModule(), child: MyApp()));
+  final client = GraphQLClient(
+    link: HttpLink("http://192.168.0.114:3000/graphql"),
+    cache: GraphQLCache(),
+  );
+  return runApp(
+    ModularApp(
+      module: AppModule(client),
+      child: MyApp(client: client),
+    ),
+  );
 }
 
 // Future<Client> initClient() async {
@@ -37,6 +47,10 @@ void main() {
 // }
 
 class AppModule extends Module {
+  final GraphQLClient client;
+
+  AppModule(this.client);
+
   @override
   List<Bind> get binds => [
         // Bind.singleton((i) => ChopperClient(
@@ -48,12 +62,12 @@ class AppModule extends Module {
         //       converter: EntryConverter(),
         //       errorConverter: JsonConverter(),
         //     )),
-        Bind.singleton((i) => ItemList()),
         // Bind.singleton((i) => ArtemisClient("http://192.168.0.114:3000/graphql"))
-        Bind.singleton((i) => GraphQLClient(
-              link: HttpLink("http://192.168.0.114:3000/graphql"),
-              cache: GraphQLCache(),
-            )),
+        Bind.singleton((i) => ItemList()),
+
+        Bind.singleton(
+          (i) => client,
+        ),
       ];
 
   @override
@@ -63,7 +77,13 @@ class AppModule extends Module {
 }
 
 class MyApp extends StatelessWidget {
-  MyApp({Key? key}) : super(key: key);
+  final GraphQLClient client;
+
+  late ValueNotifier<GraphQLClient> value;
+
+  MyApp({Key? key, required this.client})
+      : value = ValueNotifier(client),
+        super(key: key);
   // Entry obj= Entry.fromJson({"isExpense":true,"label":"Movie", "cost":900});
 
   // @override
@@ -75,12 +95,15 @@ class MyApp extends StatelessWidget {
   // }
 
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'ExpenseManager',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      routeInformationParser: Modular.routeInformationParser,
-      routerDelegate: Modular.routerDelegate,
-      debugShowCheckedModeBanner: false,
+    return GraphQLProvider(
+      client: value,
+      child: MaterialApp.router(
+        title: 'ExpenseManager',
+        theme: ThemeData(primarySwatch: Colors.blue),
+        routeInformationParser: Modular.routeInformationParser,
+        routerDelegate: Modular.routerDelegate,
+        debugShowCheckedModeBanner: false,
+      ),
     ); //added by extension
   }
 }

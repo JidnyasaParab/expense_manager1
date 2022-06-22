@@ -6,6 +6,7 @@ import 'package:expense_manager/widgets/ExpenseCard.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:gql/ast.dart';
 import 'package:graphql/client.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'model/item.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:expense_manager/store/item_list.dart';
@@ -25,22 +26,24 @@ class _ExpenseManagerState extends State<ExpenseManager> {
   // late Future<Response<List<Item>>> data;
   late ItemList item_list;
 
+  final query = GetItemsQuery();
+
   @override
   void initState() {
-    final client = Modular.get<GraphQLClient>();
-    item_list = Modular.get<ItemList>();
-    final getExpense = GetItemsQuery();
+    // final client = Modular.get<GraphQLClient>();
+    // item_list = Modular.get<ItemList>();
+    // final getExpense = GetItemsQuery();
 
-    client
-        .query(QueryOptions(document: GetItemsQuery().document))
-        .then((value) {
-      final res =
-          GetItems$Query.fromJson(Map<String, dynamic>.from(value.data!));
-      res.items.forEach((element) {
-        item_list.addItem(element!);
-      });
-      // log.d();
-    });
+    // client
+    //     .query(QueryOptions(document: GetItemsQuery().document))
+    //     .then((value) {
+    //   final res =
+    //       GetItems$Query.fromJson(Map<String, dynamic>.from(value.data!));
+    //   res.items.forEach((element) {
+    //     item_list.addItem(element!);
+    //   });
+    //   // log.d();
+    // });
     // artemis.execute(getExpense).then((value) {
     //   final log = Logger();
     //   log.d(value.data!.items);
@@ -66,26 +69,53 @@ class _ExpenseManagerState extends State<ExpenseManager> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Observer(
-        builder: (_) {
-          if (item_list.record.isEmpty) {
-            return Center(child: Text("No records to show!!"));
+    return Query<GetItems$Query>(
+        options: QueryOptions(document: query.document, parserFn: query.parse),
+        builder: (QueryResult<GetItems$Query> result,
+            {VoidCallback? refetch, FetchMore? fetchMore}) {
+          if (result.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           }
-          return SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: item_list.record
-                  .map(
-                    (e) => ExpenseCard(
-                      item: e,
-                    ),
-                  )
-                  .toList(),
-            ),
+
+          if (result.parsedData?.items.isNotEmpty ?? false) {
+            return SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: result.parsedData!.items
+                    .map(
+                      (e) => ExpenseCard(item: e!),
+                    )
+                    .toList(),
+              ),
+            );
+          }
+
+          return const Center(
+            child: Text("No records to show!!"),
           );
-        },
-      ),
-    );
+        });
+    // return Container(
+    //   child: Observer(
+    //     builder: (_) {
+    //       if (item_list.record.isEmpty) {
+    //         return Center(child: Text("No records to show!!"));
+    //       }
+    //       return SingleChildScrollView(
+    //         child: Column(
+    //           mainAxisSize: MainAxisSize.min,
+    //           children: item_list.record
+    //               .map(
+    //                 (e) => ExpenseCard(
+    //                   item: e,
+    //                 ),
+    //               )
+    //               .toList(),
+    //         ),
+    //       );
+    //     },
+    //   ),
+    // );
   }
 }

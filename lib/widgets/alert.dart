@@ -6,14 +6,22 @@ import 'package:flutter/material.dart';
 // import 'package:chopper/chopper.dart' hide Get;
 import 'package:expense_manager/store/item_list.dart';
 import 'package:expense_manager/graphql/graphql.dart';
-
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:graphql/client.dart';
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:logger/logger.dart';
+
+import '../utils/logger.dart';
 
 Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
     {GetItems$Query$Item? item}) {
-  final item_list = Modular.get<ItemList>();
+  //final item_list = Modular.get<ItemList>();
+
+  var queryRequest = Request(
+    operation: Operation(
+      document: GetItemsQuery().document,
+    ),
+  );
 
   return showDialog<AlertDialog>(
     context: context,
@@ -25,6 +33,7 @@ Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
 
       TextEditingController _amountController =
           TextEditingController(text: item?.cost.toString() ?? "");
+
       final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
       void _sendData() {
@@ -45,22 +54,54 @@ Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
                 ),
               ).document,
               variables: {
-                "isExpense": _isExpense ?? false,
-                "label": _descriptionController.text,
-                "cost": int.parse(
-                  _amountController.text.toString(),
-                ),
-              }),
+                "input": ItemInput(
+                  isExpense: _isExpense ?? false,
+                  label: _descriptionController.text,
+                  cost: int.parse(
+                    _amountController.text.toString(),
+                  ),
+                ).toJson(),
+              }
+              // variables: {
+              //   "isExpense": _isExpense ?? false,
+              //   "label": _descriptionController.text,
+              //   "cost": int.parse(
+              //     _amountController.text.toString(),
+              //   ),
+              // }),
+              ),
         )
             .then((value) {
           if (value.data != null) {
             final res = GetItems$Query$Item.fromJson(value.data!['createItem']);
+            // final log = new Logger();
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text("Expense added successfully!!"),
               ),
             );
-            item_list.addItem(res);
+
+            final data = client.readQuery(queryRequest);
+
+            // final data = client.readQuery(queryRequest);
+            // final log = new Logger();
+            // log.d(data);
+
+            if (data != null && data['items'] != null) {
+              data["items"].add(res.toJson());
+              client.writeQuery(queryRequest, data: data);
+              Navigator.of(context).pop();
+              return;
+            }
+
+            client.writeQuery(queryRequest, data: {
+              'items': [res.toJson()]
+            });
+
+            // client.watchQuery((WatchQueryOptions(fetchResults: true,
+            // document: query.document,variables: )));
+            //item_list.addItem(res);
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -68,8 +109,8 @@ Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
               ),
             );
           }
+          Navigator.of(context).pop();
         });
-        Navigator.of(context).pop();
 
         // final chopper = Modular.get<ChopperClient>();
         // ExpenseService service = chopper.getService<ExpenseService>();
@@ -92,13 +133,99 @@ Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
       }
 
       void _editData() {
-        _formKey.currentState!.save();
+        // _formKey.currentState!.save();
+        final client = Modular.get<GraphQLClient>();
+        var id = item!.id;
+
+        // log.d(id);
+
+        // String a = item_list.record[index].id;
+        // client.watchMutation(
+        //   WatchQueryOptions(
+        //     document: UpdateItemMutation(
+        //             variables: UpdateItemArguments(
+        //                 input: ItemInput(
+        //                     isExpense: _isExpense ?? false,
+        //                     label: _descriptionController.text,
+        //                     cost: int.parse(
+        //                       _amountController.text,
+        //                     )),
+        //                 id: id))
+        //         .document,
+        //     variables: {
+        //       "input": ItemInput(
+        //         isExpense: _isExpense ?? false,
+        //         label: _descriptionController.text,
+        //         cost: int.parse(
+        //           _amountController.text,
+        //         ),
+        //       ),
+        //       "id": id
+        //     },
+        //   ),
+        // );
+
+        client
+            .mutate(
+          MutationOptions(
+              document: UpdateItemMutation(
+                      variables: UpdateItemArguments(
+                          input: ItemInput(
+                              isExpense: _isExpense ?? false,
+                              label: _descriptionController.text,
+                              cost: int.parse(
+                                _amountController.text,
+                              )),
+                          id: id))
+                  .document,
+              variables: {
+                "input": ItemInput(
+                  isExpense: _isExpense ?? false,
+                  label: _descriptionController.text,
+                  cost: int.parse(
+                    _amountController.text,
+                  ),
+                ),
+                "id": id
+              }),
+        )
+            .then((value) {
+          if (value.data != null) {
+            final res = GetItems$Query$Item.fromJson(value.data!['updateItem']);
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Expense updated successfully!!"),
+              ),
+            );
+            log.d(id);
+            final data = client.readQuery(queryRequest)!;
+            final items = data["items"] as List;
+            log.d(items);
+            final index =
+                items.indexWhere((element) => element['id'] == res.id);
+
+            items[index] = res.toJson();
+            //
+            client.writeQuery(queryRequest, data: data);
+            // Navigator.of(context).pop();
+
+            // item_list.updateLabel(res, res.label!);
+            // item_list.updateCost(res, res.cost!);
+            // item_list.record;
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Some problems occurred!!"),
+              ),
+            );
+          }
+          Navigator.of(context).pop();
+        });
         // int index = item_list.record.indexOf(item);
         // item_list.record[index].isExpense = _isExpense!;
         // item_list.record[index].label = _descriptionController.text;
         // item_list.record[index].cost = int.parse(_amountController.text);
-
-        Navigator.pop(context);
       }
 
       return AlertDialog(
@@ -120,21 +247,18 @@ Future<AlertDialog?> alertItem(BuildContext context, bool is_new_item,
                       decoration: const InputDecoration(
                         labelText: "Description",
                       ),
-                      initialValue: item!.label,
+                      controller: _descriptionController,
                       onSaved: (value) {
-                        final log = Logger();
-                        log.d(value);
                         // item_list.updateLabel(item, value.toString());
                       },
                     ),
                     TextFormField(
+                      keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
                         labelText: "Cost",
                       ),
-                      initialValue: item.cost.toString(),
+                      controller: _amountController,
                       onSaved: (value) {
-                        final log = Logger();
-                        log.d(value);
                         // item_list.updateCost(item, int.parse(value.toString()));
                       },
                     )

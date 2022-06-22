@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:flutter_modular/flutter_modular.dart';
 import 'package:graphql/client.dart';
+import 'package:logger/logger.dart';
 import '../model/item.dart';
 import '../store/item_list.dart';
 import 'package:expense_manager/graphql/graphql.dart';
@@ -30,6 +31,12 @@ class _ExpenseCardState extends State<ExpenseCard> {
   late Color typeColor;
   bool isVisible = false;
   ItemList item_list = Modular.get<ItemList>();
+
+  var queryRequest = Request(
+    operation: Operation(
+      document: GetItemsQuery().document,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +103,7 @@ class _ExpenseCardState extends State<ExpenseCard> {
                 IconButton(
                   onPressed: () {
                     final client = Modular.get<GraphQLClient>();
+
                     client
                         .mutate(
                       MutationOptions(
@@ -104,9 +112,7 @@ class _ExpenseCardState extends State<ExpenseCard> {
                             input: widget.item.id.toString(),
                           ),
                         ).document,
-                        variables: {
-                          "input": widget.item.id,
-                        },
+                        variables: {"input": widget.item.id},
                       ),
                     )
                         .then((value) {
@@ -117,7 +123,21 @@ class _ExpenseCardState extends State<ExpenseCard> {
                             content: Text("Expense deleted successfully!!"),
                           ),
                         );
-                        item_list.record.remove(widget.item);
+                        // item_list.record.remove(widget.item);
+                        final data = client.readQuery(queryRequest)!;
+                        final items = data["items"] as List;
+
+                        items.cast<Map<String, dynamic>>().removeWhere(
+                              (element) => element['id'] == widget.item.id,
+                            );
+
+                        // (data["items"] as List<Map<String, dynamic>>)
+                        //     .removeWhere(
+                        //         (element) => element['id'] == widget.item.id);
+
+                        // log.d(data["items"]);
+
+                        client.writeQuery(queryRequest, data: data);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -126,6 +146,8 @@ class _ExpenseCardState extends State<ExpenseCard> {
                         );
                       }
                     }).onError((error, stackTrace) {
+                      final logger = Logger();
+                      logger.d(error, error, stackTrace);
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                         content: Text(error.toString()),
                       ));
